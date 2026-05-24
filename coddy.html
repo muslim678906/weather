@@ -206,7 +206,6 @@ const loader = document.getElementById('loader');
 const errorDiv = document.getElementById('error');
 const resultLayout = document.getElementById('resultLayout');
 
-// Коды погоды WMO переводим в понятный текст
 function getWeatherDescription(code) {
 const mapping = {
 0: 'Ясно ☀️',
@@ -223,7 +222,6 @@ const mapping = {
 return mapping[code] || 'Неизвестные условия';
 }
 
-// Форматирование даты
 function formatDate(dateStr) {
 const date = new Date(dateStr);
 return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -238,13 +236,11 @@ async function performSearch() {
 const query = cityInput.value.trim();
 if (!query) return;
 
-// Сброс интерфейса
 errorDiv.classList.add('hidden');
 resultLayout.classList.add('hidden');
 loader.classList.remove('hidden');
 
 try {
-// Шаг 1: Геокодинг — получаем координаты города по названию
 const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=ru`;
 const geoRes = await fetch(geoUrl);
 const geoData = await geoRes.json();
@@ -257,7 +253,6 @@ const city = geoData.results[0];
 const { latitude, longitude, name, country } = city;
 document.getElementById('cityName').textContent = `${name}, ${country}`;
 
-// Запускаем параллельно загрузку Погоды и данных Википедии
 await Promise.all([
 getWeatherData(latitude, longitude),
 getCityInfo(name)
@@ -277,13 +272,11 @@ const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longi
 const res = await fetch(weatherUrl);
 const data = await res.json();
 
-// Текущая погода
 const current = data.current_weather;
 document.getElementById('currentTemp').textContent = `${Math.round(current.temperature)}°C`;
 document.getElementById('currentStatus').textContent = getWeatherDescription(current.weathercode);
 document.getElementById('currentWind').textContent = `Ветер: ${current.windspeed} км/ч`;
 
-// Прогноз на 7 дней
 const forecastList = document.getElementById('forecastList');
 forecastList.innerHTML = '';
 
@@ -312,7 +305,6 @@ wikiTextEl.textContent = 'Ищем информацию о городе...';
 galleryEl.innerHTML = '';
 
 try {
-// Запрос в Википедию для получения выжимки статьи (Summary) и картинок
 const wikiUrl = `https://ru.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cityName)}`;
 const res = await fetch(wikiUrl);
 
@@ -324,18 +316,15 @@ return;
 const data = await res.json();
 wikiTextEl.textContent = data.extract || 'Описание отсутствует.';
 
-// Ищем фотографии через медиа-сервер Википедии для этой страницы
 const mediaUrl = `https://ru.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(cityName)}`;
 const mediaRes = await fetch(mediaUrl);
 if (mediaRes.ok) {
 const mediaData = await mediaRes.json();
-// Берем только изображения и не больше 4 штук
 const images = mediaData.items.filter(item => item.type === 'image').slice(0, 4);
 
 if (images.length > 0) {
 images.forEach(img => {
 const imageElement = document.createElement('img');
-// Используем безопасный src (предпочитаем srcset или подгонку размеров)
 imageElement.src = img.srcset ? 'https:' + img.srcset[0].src : img.title;
 imageElement.alt = cityName;
 galleryEl.appendChild(imageElement);
